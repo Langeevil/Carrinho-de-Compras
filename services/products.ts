@@ -1,5 +1,5 @@
 import { API_KEY, API_URL } from '@/constants/api';
-import { Product, CartItem } from '@/types';
+import { Product } from '@/types';
 
 type JsonBinResponse =
   | {
