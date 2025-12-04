@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useReducer } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useReducer, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { CartItem, Product } from '@/types';
 
@@ -11,7 +12,8 @@ type CartAction =
   | { type: 'increment'; id: number }
   | { type: 'decrement'; id: number }
   | { type: 'remove'; id: number }
-  | { type: 'clear' };
+  | { type: 'clear' }
+  | { type: 'hydrate'; items: CartItem[] };
 
 type CartContextValue = {
   items: CartItem[];
@@ -62,6 +64,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       };
     case 'clear':
       return { items: [] };
+    case 'hydrate':
+      return { items: action.items };
     default:
       return state;
   }
@@ -69,6 +73,36 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 export function CartProvider({ children }: React.PropsWithChildren) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('@cart_items');
+        if (stored) {
+          const parsed = JSON.parse(stored) as CartItem[];
+          dispatch({ type: 'hydrate', items: parsed });
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar carrinho salvo', err);
+      } finally {
+        setIsHydrated(true);
+      }
+    };
+    void loadCart();
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const persist = async () => {
+      try {
+        await AsyncStorage.setItem('@cart_items', JSON.stringify(state.items));
+      } catch (err) {
+        console.warn('Erro ao salvar carrinho', err);
+      }
+    };
+    void persist();
+  }, [state.items, isHydrated]);
 
   const totalGeral = useMemo(
     () => state.items.reduce((total, item) => total + item.preco * item.quantidade, 0),
@@ -87,6 +121,10 @@ export function CartProvider({ children }: React.PropsWithChildren) {
     }),
     [state.items, totalGeral],
   );
+
+  if (!isHydrated) {
+    return null;
+  }
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

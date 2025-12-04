@@ -1,33 +1,44 @@
-import { Image } from 'expo-image';
-import React from 'react';
-import { View } from 'react-native';
+import { Image, ImageProps } from 'expo-image';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-interface ImageWithFallbackProps {
+type Props = {
   uri: string;
-  style: any;
-  resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
   placeholderColor?: string;
+} & Omit<ImageProps, 'source'>;
+
+const fallback = require('@/assets/images/partial-react-logo.png');
+
+export function ImageWithFallback({ uri, placeholderColor = '#e5e7eb', style, ...rest }: Props) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!uri || hasError) {
+    return (
+      <View style={[styles.placeholder, { backgroundColor: placeholderColor }, style]}>
+        <Image source={fallback} style={StyleSheet.flatten([styles.fallback, style])} {...rest} />
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={style}
+      onError={() => setHasError(true)}
+      contentFit="contain"
+      cachePolicy="memory-disk"
+      {...rest}
+    />
+  );
 }
 
-export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
-  uri,
-  style,
-  resizeMode = 'cover',
-  placeholderColor = '#e8eef7',
-}) => {
-  return (
-    <View style={[style, { backgroundColor: placeholderColor }]}>
-      <Image
-        source={{ uri }}
-        style={{ width: '100%', height: '100%' }}
-        contentFit="contain"
-        cachePolicy="memory-disk"
-        placeholder={{
-          blurhash: 'L5H2SC%2WCnhVont7]WB+KiVqIAG',
-          width: 1,
-          height: 1
-        }}
-      />
-    </View>
-  );
-};
+const styles = StyleSheet.create({
+  placeholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fallback: {
+    width: '100%',
+    height: '100%',
+  },
+});

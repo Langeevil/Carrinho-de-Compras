@@ -6,8 +6,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View
+  TouchableOpacity, useWindowDimensions, View
 } from 'react-native';
 
 import { ImageWithFallback } from '@/components/ImageWithFallback';
@@ -16,15 +15,17 @@ import { fetchProducts } from '@/services/products';
 import { Product } from '@/types';
 
 const palette = {
-  blue: '#0d6efd',
-  darkBlue: '#0a2d6f',
-  turquoise: '#4fd1ff',
-  gold: '#ffc107',
+  blue: '#2563eb',
+  darkBlue: '#0f172a',
+  turquoise: '#38bdf8',
+  gold: '#d4af37',
   white: '#ffffff',
-  muted: '#7a8599',
-  surface: '#f5f7fb',
-  lightGray: '#e8eef7',
-  success: '#28a745',
+  muted: '#94a3b8',
+  surface: '#f8fafc',
+  lightGray: '#e2e8f0',
+  success: '#10b981',
+  border: '#e5e7eb',
+  shadow: '#0f172a14',
 };
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -35,6 +36,13 @@ export default function ProductsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addToCart, items } = useCart();
+
+  const { width } = useWindowDimensions();
+  // responsive columns: 1 column on very small screens, 2 on most phones, 3 on wide/tablet
+  const columns = width >= 900 ? 3 : width >= 600 ? 2 : 1;
+  const listPaddingHorizontal = 12 * 2; // styles.listContent.paddingHorizontal * 2
+  const gapBetween = 12; // approximate gap used in columnWrapperStyle
+  const cardWidth = Math.max(140, Math.floor((width - listPaddingHorizontal - gapBetween * (columns - 1)) / columns) - 4);
 
   const loadProducts = useCallback(async (isRefresh = false) => {
     setError(null);
@@ -68,18 +76,17 @@ export default function ProductsScreen() {
   const renderItem = ({ item }: { item: Product }) => {
     const itemInCart = items.find((cartItem) => cartItem.id === item.id);
     const hasImage = item.imagem?.trim();
+    const cardStyle = [styles.productCard, { width: cardWidth }];
+    const imageHeight = Math.round(cardWidth * 0.66);
 
     return (
-      <TouchableOpacity 
-        style={styles.productCard}
-        activeOpacity={0.85}
-      >
-        <View style={styles.imageContainer}>
+      <View style={cardStyle}>
+        <View style={[styles.imageContainer, { height: imageHeight }]}> 
           {hasImage ? (
             <ImageWithFallback
               uri={item.imagem.trim()}
               style={styles.productImage}
-              resizeMode="cover"
+              resizeMode="contain"
               placeholderColor={palette.lightGray}
             />
           ) : (
@@ -93,27 +100,29 @@ export default function ProductsScreen() {
             </View>
           )}
         </View>
-        
-        <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>{item.nome}</Text>
-          <Text style={styles.productPrice}>{currency.format(item.preco)}</Text>
-        </View>
 
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => addToCart(item)}
-        >
-          <Feather name="plus" size={20} color={palette.white} />
-        </TouchableOpacity>
-      </TouchableOpacity>
+        <View style={styles.productInfo}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.nome}
+          </Text>
+          <Text style={styles.productPrice}>{currency.format(item.preco)}</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => addToCart(item)}>
+            <Feather name="plus" size={18} color={palette.white} />
+            <Text style={styles.addButtonText}>Adicionar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>Descubra</Text>
-        <Text style={styles.heroSubtitle}>Adicione itens exclusivos ao seu carrinho</Text>
+        <View>
+          <Text style={styles.heroKicker}>Coleção</Text>
+          <Text style={styles.heroTitle}>Produtos</Text>
+          <Text style={styles.heroSubtitle}>Escolha e leve para o carrinho</Text>
+        </View>
       </View>
 
       {loading ? (
@@ -134,7 +143,7 @@ export default function ProductsScreen() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          columnWrapperStyle={{ justifyContent: 'space-between', gap: 12 }}
           contentContainerStyle={styles.listContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={
@@ -154,28 +163,36 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
   },
   hero: {
-    paddingHorizontal: 20,
-    paddingTop: 34,
-    paddingBottom: 26,
+    paddingHorizontal: 22,
+    paddingTop: 38,
+    paddingBottom: 24,
     backgroundColor: palette.darkBlue,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    shadowColor: palette.darkBlue,
-    shadowOpacity: 0.24,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: palette.shadow,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 12 },
     elevation: 10,
   },
+  heroKicker: {
+    color: palette.turquoise,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    fontSize: 12,
+    marginBottom: 6,
+  },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '900',
     color: palette.white,
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    marginTop: 10,
-    color: palette.turquoise,
-    fontWeight: '600',
+    marginTop: 6,
+    color: '#cbd5e1',
+    fontWeight: '500',
     fontSize: 14,
   },
   listContent: {
@@ -203,17 +220,17 @@ const styles = StyleSheet.create({
   productCard: {
     flex: 0.5,
     backgroundColor: palette.white,
-    borderRadius: 20,
+    borderRadius: 18,
     marginHorizontal: 6,
     marginVertical: 10,
-    paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    paddingBottom: 10,
+    shadowColor: palette.shadow,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
     borderWidth: 1,
-    borderColor: palette.lightGray,
+    borderColor: palette.border,
     overflow: 'hidden',
   },
   imageContainer: {
@@ -255,11 +272,11 @@ const styles = StyleSheet.create({
   productInfo: {
     paddingHorizontal: 12,
     paddingTop: 10,
-    gap: 4,
+    gap: 6,
     flex: 1,
   },
   productName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: palette.darkBlue,
     letterSpacing: -0.2,
@@ -271,17 +288,24 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginHorizontal: 12,
-    marginTop: 8,
+    marginTop: 10,
     backgroundColor: palette.blue,
     paddingVertical: 10,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: palette.blue,
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 5,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  addButtonText: {
+    color: palette.white,
+    fontWeight: '800',
+    fontSize: 13,
   },
   button: {
     marginTop: 12,

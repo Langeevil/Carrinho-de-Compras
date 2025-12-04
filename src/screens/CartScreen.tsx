@@ -1,27 +1,31 @@
 import { Feather } from '@expo/vector-icons';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { ImageWithFallback } from '@/components/ImageWithFallback';
 import { useCart } from '@/contexts/CartContext';
 import type { CartItem } from '@/types';
 
 const palette = {
-  blue: '#0d6efd',
-  darkBlue: '#0a2d6f',
-  turquoise: '#4fd1ff',
-  gold: '#ffc107',
+  blue: '#2563eb',
+  darkBlue: '#0f172a',
+  turquoise: '#38bdf8',
+  gold: '#d4af37',
   white: '#ffffff',
-  muted: '#7a8599',
-  surface: '#f5f7fb',
-  lightGray: '#e8eef7',
-  danger: '#dc3545',
-  success: '#28a745',
+  muted: '#94a3b8',
+  surface: '#f8fafc',
+  lightGray: '#e2e8f0',
+  danger: '#ef4444',
+  success: '#10b981',
+  border: '#e5e7eb',
+  shadow: '#0f172a14',
 };
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function CartScreen() {
   const { items, increment, decrement, remove, totalGeral } = useCart();
+  const { width } = useWindowDimensions();
+  const imageSize = width >= 700 ? 120 : width >= 420 ? 100 : 84;
 
   const renderItem = ({ item }: { item: CartItem }) => {
     const subtotal = item.preco * item.quantidade;
@@ -29,12 +33,12 @@ export default function CartScreen() {
 
     return (
       <View style={styles.card}>
-        <View style={styles.imageSection}>
+        <View style={[styles.imageSection, { width: imageSize, height: Math.round(imageSize * 1.1) }]}> 
           {hasImage ? (
             <ImageWithFallback
               uri={item.imagem.trim()}
               style={styles.image}
-              resizeMode="cover"
+              resizeMode="contain"
               placeholderColor={palette.lightGray}
             />
           ) : (
@@ -128,53 +132,55 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 34,
-    paddingBottom: 20,
+    paddingHorizontal: 22,
+    paddingTop: 38,
+    paddingBottom: 22,
     backgroundColor: palette.darkBlue,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    shadowColor: palette.darkBlue,
-    shadowOpacity: 0.24,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: palette.shadow,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 12 },
     elevation: 10,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     color: palette.white,
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    marginTop: 8,
-    color: palette.turquoise,
-    fontWeight: '600',
-    fontSize: 13,
+    marginTop: 6,
+    color: '#cbd5e1',
+    fontWeight: '500',
+    fontSize: 14,
   },
   listContent: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
   },
   card: {
     backgroundColor: palette.white,
     borderRadius: 18,
-    marginBottom: 12,
+    marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'stretch',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    shadowColor: palette.shadow,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
     borderWidth: 1,
-    borderColor: palette.lightGray,
+    borderColor: palette.border,
     overflow: 'hidden',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   imageSection: {
-    width: 100,
-    height: 120,
+    width: 104,
+    height: 128,
     backgroundColor: palette.lightGray,
   },
   image: {
@@ -193,10 +199,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   textContent: {
-    gap: 4,
+    gap: 6,
   },
   title: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: palette.darkBlue,
     letterSpacing: -0.2,
@@ -217,14 +223,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: palette.lightGray,
-    borderRadius: 10,
-    paddingHorizontal: 6,
+    borderRadius: 12,
+    paddingHorizontal: 8,
     paddingVertical: 4,
   },
   qtyButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 10,
     backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: '#d0d6e2',
@@ -286,13 +292,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: palette.white,
     borderTopWidth: 1,
-    borderColor: palette.lightGray,
+    borderColor: palette.border,
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowColor: palette.shadow,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: -2 },
-    elevation: 6,
+    elevation: 8,
   },
   totalSection: {
     paddingHorizontal: 4,
