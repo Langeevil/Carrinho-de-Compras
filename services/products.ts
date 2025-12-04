@@ -13,7 +13,7 @@ type JsonBinResponse =
 
 export async function fetchProducts(): Promise<Product[]> {
   if (!API_URL) {
-    throw new Error('URL do jsonbin.io não configurada. Defina EXPO_PUBLIC_JSONBIN_URL.');
+    throw new Error('URL do jsonbin.io não configurada em constants/api.js');
   }
 
   const response = await fetch(API_URL, {
