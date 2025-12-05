@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
-import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { ImageWithFallback } from '@/components/ImageWithFallback';
 import { useCart } from '@/contexts/CartContext';
@@ -26,6 +27,30 @@ export default function CartScreen() {
   const { items, increment, decrement, remove, totalGeral } = useCart();
   const { width } = useWindowDimensions();
   const imageSize = width >= 700 ? 120 : width >= 420 ? 100 : 84;
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleCheckout = async () => {
+    setIsProcessing(true);
+    
+    // Simula processamento da compra (1 segundo)
+    setTimeout(() => {
+      setIsProcessing(false);
+      
+      // Limpa todos os itens do carrinho
+      items.forEach(item => {
+        for (let i = 0; i < item.quantidade; i++) {
+          remove(item.id);
+        }
+      });
+
+      // Exibe mensagem de sucesso
+      Alert.alert(
+        '✅ Compra Finalizada!',
+        'Sua compra foi processada com sucesso! Obrigado por comprar conosco.',
+        [{ text: 'OK', onPress: () => {} }]
+      );
+    }, 1000);
+  };
 
   const renderItem = ({ item }: { item: CartItem }) => {
     const subtotal = item.preco * item.quantidade;
@@ -115,9 +140,15 @@ export default function CartScreen() {
               <Text style={styles.totalValue}>{currency.format(totalGeral)}</Text>
             </View>
             
-            <Pressable style={styles.checkoutButton}>
+            <Pressable 
+              style={[styles.checkoutButton, isProcessing && styles.checkoutButtonDisabled]}
+              onPress={handleCheckout}
+              disabled={isProcessing}
+            >
               <Feather name="credit-card" size={20} color={palette.white} />
-              <Text style={styles.checkoutText}>Finalizar compra</Text>
+              <Text style={styles.checkoutText}>
+                {isProcessing ? 'Processando...' : 'Finalizar compra'}
+              </Text>
             </Pressable>
           </View>
         </>
@@ -327,6 +358,9 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
+  },
+  checkoutButtonDisabled: {
+    opacity: 0.6,
   },
   checkoutText: {
     color: palette.white,
